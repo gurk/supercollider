@@ -551,8 +551,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	do {
-		// err = AudioHardwareGetPropertyInfo( kAudioHardwarePropertyDevices, &count, 0);
-
 		propertyAddress.mSelector = kAudioHardwarePropertyDevices;
 
 		err = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &count);
@@ -563,8 +561,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		AudioDeviceID *devices = (AudioDeviceID*)malloc(count);
-
-		// err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &count, devices);
 
 		err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &count, devices);
 
@@ -581,8 +577,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		for (int i = 0; i < numdevices; ++i) {
 			propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 
-			// err = AudioDeviceGetPropertyInfo(devices[i], 0, false, kAudioDevicePropertyDeviceName, &count, 0);
-
 			err = AudioObjectGetPropertyDataSize(devices[i], &propertyAddress, 0, NULL, &count);
 
 			if (err != kAudioHardwareNoError) {
@@ -591,7 +585,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 			}
 
 			char *name = (char*)malloc(count);
-			// err = AudioDeviceGetProperty(devices[i], 0, false, kAudioDevicePropertyDeviceName, &count, name);
 
 			err = AudioObjectGetPropertyData(devices[i], &propertyAddress, 0, NULL, &count, name);
 
@@ -614,8 +607,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	if (mWorld->hw->mInDeviceName || mWorld->hw->mOutDeviceName) {
 		propertyAddress.mSelector = kAudioHardwarePropertyDevices;
 
-		// err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &count, 0);
-
 		err = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &count);
 
 		if (err != kAudioHardwareNoError) {
@@ -625,7 +616,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 
 		AudioDeviceID *devices = (AudioDeviceID*)malloc(count);
 
-		// err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &count, devices);
 		err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &count, devices);
 
 		if (err != kAudioHardwareNoError) {
@@ -635,8 +625,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 
 		int numdevices = count / sizeof(AudioDeviceID);
 		for (int i = 0; i < numdevices; ++i) {
-
-			// err = AudioDeviceGetPropertyInfo(devices[i], 0, false, kAudioDevicePropertyDeviceName, &count, 0);
 			propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 			err = AudioObjectGetPropertyDataSize(devices[i], &propertyAddress, 0, NULL, &count);
 
@@ -646,8 +634,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 			}
 
 			char *name = (char*)malloc(count);
-
-			// err = AudioDeviceGetProperty(devices[i], 0, false, kAudioDevicePropertyDeviceName, &count, name);
 
 			err = AudioObjectGetPropertyData(devices[i], &propertyAddress, 0, NULL, &count, name);
 
@@ -674,7 +660,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		{
 			count = sizeof(mOutputDevice);
 			//get the output device:
-			//			err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &count, (void *) & mOutputDevice);
 
 			propertyAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
 
@@ -690,7 +675,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		if (mInputDevice==kAudioDeviceUnknown)
 		{
 			count = sizeof(mInputDevice);
-			//			err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &count, (void *) & mInputDevice);
 
 			propertyAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
 
@@ -712,9 +696,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	now.mHostTime = AudioGetCurrentHostTime();
 	if (mPreferredHardwareBufferFrameSize)
 	{
-
 		count = sizeof(UInt32);
-		//		err = AudioDeviceSetProperty(mOutputDevice, &now, 0, false, kAudioDevicePropertyBufferFrameSize, count, &mPreferredHardwareBufferFrameSize);
 
 		propertyAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
 		propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -728,7 +710,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		if (UseSeparateIO())
 		{
 			count = sizeof(UInt32);
-			//err = AudioDeviceSetProperty(mOutputDevice, &now, 0, false, kAudioDevicePropertyBufferFrameSize, count, &mPreferredHardwareBufferFrameSize);
 
 			propertyAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
 			propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -745,7 +726,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	{
 		Float64 sampleRate = mPreferredSampleRate;
 		count = sizeof(Float64);
-		//err = AudioDeviceSetProperty(mOutputDevice, &now, 0, false, kAudioDevicePropertyNominalSampleRate, count, &sampleRate);
 
 		propertyAddress.mSelector = kAudioDevicePropertyNominalSampleRate;
 		propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -759,7 +739,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		if (UseSeparateIO())
 		{
 			count = sizeof(Float64);
-			//err = AudioDeviceSetProperty(mInputDevice, &now, 0, false, kAudioDevicePropertyNominalSampleRate, count, &sampleRate);
+
 			propertyAddress.mSelector = kAudioDevicePropertyNominalSampleRate;
 			propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -773,7 +753,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 
 	// get the buffersize for the out device
 	count = sizeof(mHardwareBufferSize);
-	// err = AudioDeviceGetProperty(mOutputDevice, 0, false, kAudioDevicePropertyBufferSize, &count, &mHardwareBufferSize);
+
 	propertyAddress.mSelector = kAudioDevicePropertyBufferSize;
 	propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
 
@@ -787,7 +767,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 
 	// get a description of the data format used by the output device
 	count = sizeof(AudioStreamBasicDescription);
-	// err = AudioDeviceGetProperty(mOutputDevice, 0, false, kAudioDevicePropertyStreamFormat, &count, &outputStreamDesc);
+
 	propertyAddress.mSelector = kAudioDevicePropertyStreamFormat;
 	propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
 
@@ -801,7 +781,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	if (mInputDevice != kAudioDeviceUnknown) {
 		// get a description of the data format used by the input device
 		count = sizeof(AudioStreamBasicDescription);
-		// err = AudioDeviceGetProperty(mInputDevice, 0, true, kAudioDevicePropertyStreamFormat, &count, &inputStreamDesc);
+
 		propertyAddress.mSelector = kAudioDevicePropertyStreamFormat;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -820,8 +800,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	do {
-
-		// err = AudioDeviceGetPropertyInfo(mInputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, 0);
 		propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -833,7 +811,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		char *name = (char*)malloc(count);
-		//err = AudioDeviceGetProperty(mInputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, name);
 
 		err = AudioObjectGetPropertyData(mInputDevice, &propertyAddress, 0, NULL, &count, name);
 
@@ -850,7 +827,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 
 		Boolean writeable;
 
-		// err = AudioDeviceGetPropertyInfo(mInputDevice, 0, 1, kAudioDevicePropertyStreamConfiguration, &count, &writeable);
 		propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -869,7 +845,7 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		AudioBufferList *bufList = (AudioBufferList*)malloc(count);
-		// err = AudioDeviceGetProperty(mInputDevice, 0, 1, kAudioDevicePropertyStreamConfiguration, &count, bufList);
+
 		propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -896,14 +872,13 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	do {
-		// err = AudioDeviceGetPropertyInfo(mOutputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, 0);
 		propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 		propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
 
 		err = AudioObjectGetPropertyDataSize(mOutputDevice, &propertyAddress, 0, NULL, &count);
 
 		char *name = (char*)malloc(count);
-		// err = AudioDeviceGetProperty(mOutputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, name);
+
 		err = AudioObjectGetPropertyData(mOutputDevice, &propertyAddress, 0, NULL, &count, name);
 		if (err != kAudioHardwareNoError) {
 			scprintf("get kAudioDevicePropertyDeviceName error %4.4s\n", (char*)&err);
@@ -917,7 +892,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		free(name);
 
 		Boolean writeable;
-		// err = AudioDeviceGetPropertyInfo(mOutputDevice, 0, 0, kAudioDevicePropertyStreamConfiguration, &count, &writeable);
 
 		propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
 		propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -937,7 +911,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		AudioBufferList *bufList = (AudioBufferList*)malloc(count);
-		// err = AudioDeviceGetProperty(mOutputDevice, 0, 0, kAudioDevicePropertyStreamConfiguration, &count, bufList);
 
 		propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration	;
 		propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -959,12 +932,12 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	if(mWorld->mVerbosity >= 0){
 		scprintf("\n");
 	}
+    
 	////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 	if (UseSeparateIO()) {
 		count = sizeof(UInt32);
-		//err = AudioDeviceGetProperty(mInputDevice, 0, true, kAudioDevicePropertySafetyOffset, &count, &mSafetyOffset);
+
 		propertyAddress.mSelector = kAudioDevicePropertySafetyOffset;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
 
@@ -979,7 +952,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		Boolean writeable;
-		//		err = AudioDeviceGetPropertyInfo(mInputDevice, 0, true, kAudioDevicePropertyStreamConfiguration, &count, &writeable);
 
 		propertyAddress.mSelector = kAudioDevicePropertyStreamConfiguration;
 		propertyAddress.mScope = kAudioDevicePropertyScopeInput;
@@ -999,8 +971,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		}
 
 		mInputBufList = (AudioBufferList*)malloc(count);
-
-		//err = AudioDeviceGetProperty(mInputDevice, 0, true, kAudioDevicePropertyStreamConfiguration, &count, mInputBufList);
 
 		err = AudioObjectGetPropertyData(mInputDevice, &propertyAddress, 0, NULL, &count, mInputBufList);
 
@@ -1040,12 +1010,8 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		scprintf("<-SC_CoreAudioDriver::Setup world %p\n", mWorld);
 	}
 
-
-
 	//check if using built-in output, and thus whether there could be headphone plug/un-plug issues
 	//our assumption otherwise is that we don't respond, and SC will stay with the pre-arranged or default device, and not restart just because headphones switched
-
-	// err = AudioDeviceGetPropertyInfo(mOutputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, 0);
 
 	propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 	propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
@@ -1060,7 +1026,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 	char *outputname = (char*)malloc(count);
 	const char *testname = "Built-in Output";
 
-	// err = AudioDeviceGetProperty(mOutputDevice, 0, false, kAudioDevicePropertyDeviceName, &count, outputname);
 	err = AudioObjectGetPropertyData(mOutputDevice, &propertyAddress, 0, NULL, &count, outputname);
 
 	if (err != kAudioHardwareNoError) {
@@ -1356,8 +1321,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
         case kAudioHardwarePropertyDefaultOutputDevice:
             scprintf("%s\n", "***** HARDWARE NOTIFICATION - kAudioHardwarePropertyDefaultOutputDevice\r");
 
-			//err =  AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDefaultOutputDevice,  &outSize, &outWritable);
-
 			propertyAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
 
 			err = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &outSize);
@@ -1368,12 +1331,9 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 
 			if (err) break;
 
-			//err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &outSize, &deviceID);
-
 			err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &outSize, &deviceID);
 
 			if (err) break;
-			//			err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceName,  &outSize, &outWritable);
 
 			propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 
@@ -1384,8 +1344,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 			err = AudioObjectIsPropertySettable(deviceID, &propertyAddress, &outWritable);
 
 			if (err) break;
-
-			//err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceName, &outSize, cStr);
 
 			err = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, NULL, &outSize, cStr);
 
@@ -1397,7 +1355,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 
         case kAudioHardwarePropertyDefaultInputDevice:
             scprintf("%s\n", "***** HARDWARE NOTIFICATION - kAudioHardwarePropertyDefaultInputDevice\r");
-			// err =  AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDefaultInputDevice,  &outSize, &outWritable);
 
 			propertyAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
 
@@ -1409,14 +1366,9 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 
 			if (err) break;
 
-			// err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &outSize, &deviceID);
-
 			err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &outSize, &deviceID);
 
 			if (err) break;
-
-			// err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceName,  &outSize, &outWritable);
-
 
 			propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 
@@ -1427,9 +1379,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 			err = AudioObjectIsPropertySettable(deviceID, &propertyAddress, &outWritable);
 
 			if (err) break;
-
-			// err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceName, &outSize, cStr);
-
 
 			err = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, NULL, &outSize, cStr);
 
@@ -1441,7 +1390,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 
         case kAudioHardwarePropertyDefaultSystemOutputDevice:
             scprintf("%s\n", "***** HARDWARE NOTIFICATION - kAudioHardwarePropertyDefaultSystemOutputDevice\r");
-            //err =  AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDefaultSystemOutputDevice,  &outSize, &outWritable);
 
 			propertyAddress.mSelector = kAudioHardwarePropertyDefaultSystemOutputDevice;
 
@@ -1453,13 +1401,9 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 
 			if (err) break;
 
-			// err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultSystemOutputDevice, &outSize, &deviceID);
-
 			err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &outSize, &deviceID);
 
 			if (err) break;
-
-			// err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceName,  &outSize, &outWritable);
 
 			propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
 
@@ -1470,8 +1414,6 @@ OSStatus	hardwareListenerProc (	AudioHardwarePropertyID	inPropertyID,
 			err = AudioObjectIsPropertySettable(deviceID, &propertyAddress, &outWritable);
 
 			if (err) break;
-
-			// err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceName, &outSize, cStr);
 
 			err = AudioObjectGetPropertyData(deviceID, &propertyAddress, 0, NULL, &outSize, cStr);
 
@@ -1517,21 +1459,19 @@ bool SC_CoreAudioDriver::DriverStart()
 
 	try {
 	if (UseSeparateIO()) {
-		//		err = AudioDeviceAddIOProc(mOutputDevice, appIOProc, (void *) this);	// setup Out device with an IO proc
-
 		err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, (void*) this, &mOutputID);
+        
 		if (err != kAudioHardwareNoError) {
 			scprintf("AudioDeviceAddIOProc failed %s %d\n", &err, (int)err);
 			return false;
 		}
-		//		err = AudioDeviceAddIOProc(mInputDevice, appIOProcSeparateIn, (void *) this);		// setup In device with an IO proc
+        
 		err = AudioDeviceCreateIOProcID(mInputDevice, appIOProcSeparateIn , (void *)this, &mInputID);
 
 		if (err != kAudioHardwareNoError) {
 			scprintf("AudioDeviceAddIOProc failed %s %d\n", &err, (int)err);
 			return false;
 		}
-
 
 		if (mWorld->hw->mInputStreamsEnabled) {
 			propertyAddress.mSelector = kAudioDevicePropertyIOProcStreamUsage;
@@ -1590,8 +1530,7 @@ bool SC_CoreAudioDriver::DriverStart()
 			return false;
 		}
 	} else {
-		// err = AudioDeviceAddIOProc(mOutputDevice, appIOProc, (void *) this);	// setup our device with an IO proc
-		err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, (void *) this, &mOutputID);
+		err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, (void *) this, &mOutputID);   // setup our device with an IO proc
 
 		if (err != kAudioHardwareNoError) {
 			scprintf("AudioDeviceAddIOProc failed %d\n", (int)err);
@@ -1649,12 +1588,11 @@ bool SC_CoreAudioDriver::DriverStart()
 		}
 	}
 	} catch (...) {
-	scprintf("exception in SC_CoreAudioDriver::DriverStart\n");
+		scprintf("exception in SC_CoreAudioDriver::DriverStart\n");
 	}
 	if(mWorld->mVerbosity >= 1){
 		scprintf("<-SC_CoreAudioDriver::DriverStart\n");
 	}
-
 
 	//http://lists.apple.com/archives/coreaudio-api/2010/Aug/msg00114.html
 	CFRunLoopRef theRunLoop =  NULL;
