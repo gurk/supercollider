@@ -457,8 +457,6 @@ bool SC_AudioDriver::Setup()
 	if (!DriverSetup(&numSamples, &sampleRate)) return false;
 
 	mNumSamplesPerCallback = numSamples;
-	//scprintf("mNumSamplesPerCallback %d\n", mNumSamplesPerCallback);
-	//scprintf("mHardwareBufferSize %lu\n", mHardwareBufferSize);
 
 	// compute a per sample increment to the OpenSoundControl Time
 	mOSCincrementNumerator = (double)mWorld->mBufLength * pow(2.,32.);
@@ -989,18 +987,6 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 			mInputBufList->mBuffers[i].mData = zalloc(1, mInputBufList->mBuffers[i].mDataByteSize);
 		}
 
-		/*
-		AudioTimeStamp	now;
-		now.mFlags = kAudioTimeStampHostTimeValid;
-		now.mHostTime = AudioGetCurrentHostTime();
-
-
-		err = AudioDeviceSetProperty(mInputDevice, &now, 0, true, kAudioDevicePropertyRegisterBufferList, count, mInputBufList);
-		if (err != kAudioHardwareNoError) {
-			scprintf("get kAudioDevicePropertyRegisterBufferList error %4.4s\n", (char*)&err);
-			return false;
-		}
-		*/
 	}
 
 	*outNumSamplesPerCallback = mHardwareBufferSize / outputStreamDesc.mBytesPerFrame;
@@ -1010,77 +996,8 @@ bool SC_CoreAudioDriver::DriverSetup(int* outNumSamplesPerCallback, double* outS
 		scprintf("<-SC_CoreAudioDriver::Setup world %p\n", mWorld);
 	}
 
-	//check if using built-in output, and thus whether there could be headphone plug/un-plug issues
-	//our assumption otherwise is that we don't respond, and SC will stay with the pre-arranged or default device, and not restart just because headphones switched
-
-	propertyAddress.mSelector = kAudioDevicePropertyDeviceName;
-	propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
-
-	err = AudioObjectGetPropertyDataSize(mOutputDevice, &propertyAddress, 0, NULL, &count);
-
-	if (err != kAudioHardwareNoError) {
-		scprintf("info kAudioDevicePropertyDeviceName error %4.4s %p\n", (char*)&err, mOutputDevice);
-		return false;
-	}
-
-	char *outputname = (char*)malloc(count);
-	const char *testname = "Built-in Output";
-
-	err = AudioObjectGetPropertyData(mOutputDevice, &propertyAddress, 0, NULL, &count, outputname);
-
-	if (err != kAudioHardwareNoError) {
-		scprintf("get kAudioDevicePropertyDeviceName error %4.4s %p\n", (char*)&err, mOutputDevice);
-		return false;
-	}
-	builtinoutputflag_ = 0;
-
-	if (strcmp(testname, outputname) == 0) {
-		builtinoutputflag_ = 1;
-	}
-// else {
-//
-//		//check for an Aggregate Devices with a subdevice which is Built-in Output
-//		//http://lists.apple.com/archives/coreaudio-api/2009/Oct/msg00182.html
-//
-//
-//	}
-
-	free(outputname);
-
-
 	return true;
 }
-
-/*
-OSStatus appIOProc2 (AudioDeviceID inDevice, const AudioTimeStamp* inNow,
-					const AudioBufferList* inInputData,
-					const AudioTimeStamp* inInputTime,
-					AudioBufferList* outOutputData,
-					const AudioTimeStamp* inOutputTime,
-					void* defptr);
-OSStatus appIOProc2 (AudioDeviceID inDevice, const AudioTimeStamp* inNow,
-					const AudioBufferList* inInputData,
-					const AudioTimeStamp* inInputTime,
-					AudioBufferList* outOutputData,
-					const AudioTimeStamp* inOutputTime,
-					void* defptr)
-{
-	SC_CoreAudioDriver* def = (SC_CoreAudioDriver*)defptr;
-
-	int64 oscTime = CoreAudioHostTimeToOSC(inOutputTime->mHostTime);
-
-	AudioTimeStamp readTime;
-	readTime.mSampleTime = inNow->mSampleTime - def->SafetyOffset() - def->NumSamplesPerCallback();
-	readTime.mFlags = kAudioTimeStampSampleTimeValid;
-
-	AudioDeviceRead(def->InputDevice(), &readTime, def->GetInputBufferList());
-
-	def->Run(def->GetInputBufferList(), outOutputData, oscTime);
-
-	return kAudioHardwareNoError;
-}
-*/
-
 
 OSStatus appIOProcSeparateIn (AudioDeviceID device, const AudioTimeStamp* inNow,
 					const AudioBufferList* inInputData,
@@ -1101,7 +1018,8 @@ OSStatus appIOProcSeparateIn (AudioDeviceID device, const AudioTimeStamp* inNow,
 	return kAudioHardwareNoError;
 }
 
-OSStatus appIOProc (AudioDeviceID device, const AudioTimeStamp* inNow,
+OSStatus appIOProc (AudioDeviceID device,
+					const AudioTimeStamp* inNow,
 					const AudioBufferList* inInputData,
 					const AudioTimeStamp* inInputTime,
 					AudioBufferList* outOutputData,
@@ -1122,16 +1040,6 @@ OSStatus appIOProc (AudioDeviceID device, const AudioTimeStamp* inNow,
 		smoothSampleRate = smoothSampleRate + 0.002 * (instSampleRate - smoothSampleRate);
 		def->mOSCincrement = (int64)(def->mOSCincrementNumerator / smoothSampleRate);
 		def->mSmoothSampleRate = smoothSampleRate;
-
-#if 0
-		double avgSampleRate  = (sampleTime - def->mStartSampleTime)/(hostSecs - def->mStartHostSecs);
-		double jitter = (smoothSampleRate * (hostSecs - def->mPrevHostSecs)) - (sampleTime - def->mPrevSampleTime);
-		double drift = (smoothSampleRate - def->mSampleRate) * (hostSecs - def->mStartHostSecs);
-		//if (fabs(jitter) > 0.01) {
-			scprintf("avgSR %.6f   smoothSR %.6f   instSR %.6f   jitter %.6f   drift %.6f   inc %lld\n",
-				avgSampleRate, smoothSampleRate, instSampleRate, jitter, drift, def->mOSCincrement);
-		//}
-#endif
 	}
 	def->mPrevHostSecs = hostSecs;
 	def->mPrevSampleTime = sampleTime;
@@ -1141,7 +1049,6 @@ OSStatus appIOProc (AudioDeviceID device, const AudioTimeStamp* inNow,
 		def->Run(inInputData, outOutputData, oscTime);
 		return kAudioHardwareNoError;
 	}
-
 
 	def->Run(def->mInputBufList, outOutputData, oscTime);
 	return kAudioHardwareNoError;
@@ -1163,9 +1070,6 @@ void SC_CoreAudioDriver::Run(const AudioBufferList* inInputData,
 #endif
 
 		mFromEngine.Free();
-		/*if (mToEngine.HasData()) {
-			scprintf("oscTime %.9f %.9f\n", oscTime*kOSCtoSecs, CoreAudioHostTimeToOSC(AudioGetCurrentHostTime())*kOSCtoSecs);
-		}*/
 		mToEngine.Perform();
 		mOscPacketsToEngine.Perform();
 
@@ -1180,8 +1084,6 @@ void SC_CoreAudioDriver::Run(const AudioBufferList* inInputData,
 		int32* outputTouched = world->mAudioBusTouched;
 		int numInputStreams  = inInputData ? inInputData->mNumberBuffers : 0;
 		int numOutputStreams = outOutputData ? outOutputData->mNumberBuffers : 0;
-
-		//static int go = 0;
 
 		int64 oscInc = mOSCincrement;
 		double oscToSamples = mOSCtoSamples;
@@ -1218,15 +1120,9 @@ void SC_CoreAudioDriver::Run(const AudioBufferList* inInputData,
 					}
 				}
 			}
-			//count++;
 
 			int64 schedTime;
 			int64 nextTime = oscTime + oscInc;
-
-			/*if (mScheduler.Ready(nextTime)) {
-				double diff = (mScheduler.NextTime() - mOSCbuftime)*kOSCtoSecs;
-				scprintf("rdy %.9f %.9f %.9f\n", (mScheduler.NextTime()-gStartupOSCTime) * kOSCtoSecs, (mOSCbuftime-gStartupOSCTime)*kOSCtoSecs, diff);
-			}*/
 
 			while ((schedTime = mScheduler.NextTime()) <= nextTime) {
 				float diffTime = (float)(schedTime - oscTime) * oscToSamples + 0.5;
@@ -1300,7 +1196,7 @@ bool SC_CoreAudioDriver::DriverStart()
 		scprintf("->SC_CoreAudioDriver::DriverStart\n");
 	}
 	OSStatus	err = kAudioHardwareNoError;
-	// AudioTimeStamp	now;
+
 	UInt32 propertySize;
 	Boolean writable;
 	AudioObjectPropertyAddress propertyAddress;
@@ -1582,37 +1478,6 @@ SC_iCoreAudioDriver::~SC_iCoreAudioDriver()
 {
 }
 
-/*
-OSStatus appIOProc2 (AudioDeviceID inDevice, const AudioTimeStamp* inNow,
-					const AudioBufferList* inInputData,
-					const AudioTimeStamp* inInputTime,
-					AudioBufferList* outOutputData,
-					const AudioTimeStamp* inOutputTime,
-					void* defptr);
-OSStatus appIOProc2 (AudioDeviceID inDevice, const AudioTimeStamp* inNow,
-					const AudioBufferList* inInputData,
-					const AudioTimeStamp* inInputTime,
-					AudioBufferList* outOutputData,
-					const AudioTimeStamp* inOutputTime,
-					void* defptr)
-{
-	SC_CoreAudioDriver* def = (SC_CoreAudioDriver*)defptr;
-
-	int64 oscTime = CoreAudioHostTimeToOSC(inOutputTime->mHostTime);
-
-	AudioTimeStamp readTime;
-	readTime.mSampleTime = inNow->mSampleTime - def->SafetyOffset() - def->NumSamplesPerCallback();
-	readTime.mFlags = kAudioTimeStampSampleTimeValid;
-
-	AudioDeviceRead(def->InputDevice(), &readTime, def->GetInputBufferList());
-
-	def->Run(def->GetInputBufferList(), outOutputData, oscTime);
-
-	return kAudioHardwareNoError;
-}
-*/
-
-
 OSStatus InputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
 {
 	SC_iCoreAudioDriver *driver = (SC_iCoreAudioDriver *) inRefCon;
@@ -1849,59 +1714,6 @@ void SC_iCoreAudioDriver::Run(const AudioBufferList* inInputData,
 
 	mAudioSync.Signal();
 }
-
-
-
-
-/*
-OSStatus appIOProc (AudioDeviceID device, const AudioTimeStamp* inNow,
-					const AudioBufferList* inInputData,
-					const AudioTimeStamp* inInputTime,
-					AudioBufferList* outOutputData,
-					const AudioTimeStamp* inOutputTime,
-					void* defptr)
-{
-	SC_CoreAudioDriver* def = (SC_CoreAudioDriver*)defptr;
-	int64 oscTime = CoreAudioHostTimeToOSC(inOutputTime->mHostTime);
-
-	double hostSecs = (double)AudioConvertHostTimeToNanos(inOutputTime->mHostTime) * 1e-9;
-	double sampleTime = inOutputTime->mSampleTime;
-	if (def->mStartHostSecs == 0) {
-		def->mStartHostSecs = hostSecs;
-		def->mStartSampleTime = sampleTime;
-	} else {
-		double instSampleRate = (sampleTime -  def->mPrevSampleTime)/(hostSecs -  def->mPrevHostSecs);
-		double smoothSampleRate = def->mSmoothSampleRate;
-		smoothSampleRate = smoothSampleRate + 0.002 * (instSampleRate - smoothSampleRate);
-		def->mOSCincrement = (int64)(def->mOSCincrementNumerator / smoothSampleRate);
-		def->mSmoothSampleRate = smoothSampleRate;
-
-#if 0
-		double avgSampleRate  = (sampleTime - def->mStartSampleTime)/(hostSecs - def->mStartHostSecs);
-		double jitter = (smoothSampleRate * (hostSecs - def->mPrevHostSecs)) - (sampleTime - def->mPrevSampleTime);
-		double drift = (smoothSampleRate - def->mSampleRate) * (hostSecs - def->mStartHostSecs);
-		//if (fabs(jitter) > 0.01) {
-			scprintf("avgSR %.6f   smoothSR %.6f   instSR %.6f   jitter %.6f   drift %.6f   inc %lld\n",
-				avgSampleRate, smoothSampleRate, instSampleRate, jitter, drift, def->mOSCincrement);
-		//}
-#endif
-	}
-	def->mPrevHostSecs = hostSecs;
-	def->mPrevSampleTime = sampleTime;
-
-	if (!def->UseSeparateIO())
-	{
-		def->Run(inInputData, outOutputData, oscTime);
-		return kAudioHardwareNoError;
-	}
-
-
-	def->Run(lastInputData, outOutputData, oscTime);
-	lastInputData = 0;
-
-	return kAudioHardwareNoError;
-}
-*/
 
 
 void AudioSessionInterruptionCbk(void *inClientData, UInt32 inInterruptionState)
