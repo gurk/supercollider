@@ -67,7 +67,7 @@ void LangClient::customEvent(QEvent* e) {
     switch (type) {
     case Event_SCRequest_Tick:
         tick();
-
+        break;
     case Event_SCRequest_Work:
         QApplication::removePostedEvents(this, Event_SCRequest_Work);
         mIoService.poll();
@@ -83,8 +83,12 @@ void LangClient::customEvent(QEvent* e) {
 }
 
 void LangClient::tick() {
+    if (!trylock()) {
+        // bail early if unable to lock language
+        // avoids deadlock
+        return;
+    }
     double secs;
-    lock();
     bool haveNext = tickLocked(&secs);
     unlock();
 
