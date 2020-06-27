@@ -83,8 +83,11 @@ void LangClient::customEvent(QEvent* e) {
 }
 
 void LangClient::tick() {
+    if (!trylock()) {
+        // bail early if language lock unavailable, to avoid potential deadlock
+        return;
+    }
     double secs;
-    lock();
     bool haveNext = tickLocked(&secs);
     unlock();
 
